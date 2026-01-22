@@ -1,0 +1,136 @@
+{
+  "name": "vscode-branch-diff",
+  "displayName": "Branch Diff",
+  "description": "View the complete diff of your current branch compared to main",
+  "version": "0.0.1",
+  "publisher": "devinat1",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devinat1/vscode-branch-diff"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "extensionDependencies": [
+    "vscode.git"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "branchDiff",
+          "title": "Branch Diff",
+          "icon": "resources/icons/branch-diff.svg"
+        }
+      ]
+    },
+    "views": {
+      "branchDiff": [
+        {
+          "id": "branchDiffView",
+          "name": "Changed Files",
+          "when": "gitOpenRepositoryCount > 0"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "branchDiffView",
+        "contents": "No Git repository found.\n[Open Folder](command:vscode.openFolder)",
+        "when": "gitOpenRepositoryCount == 0"
+      }
+    ],
+    "commands": [
+      {
+        "command": "branchDiff.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)",
+        "category": "Branch Diff"
+      },
+      {
+        "command": "branchDiff.openDiff",
+        "title": "Open Diff",
+        "category": "Branch Diff"
+      },
+      {
+        "command": "branchDiff.changeBaseBranch",
+        "title": "Change Base Branch",
+        "icon": "$(git-branch)",
+        "category": "Branch Diff"
+      },
+      {
+        "command": "branchDiff.openFile",
+        "title": "Open File",
+        "category": "Branch Diff"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "branchDiff.refresh",
+          "when": "view == branchDiffView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "branchDiff.changeBaseBranch",
+          "when": "view == branchDiffView",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "branchDiff.openDiff",
+          "when": "view == branchDiffView && viewItem == changedFile",
+          "group": "inline"
+        },
+        {
+          "command": "branchDiff.openFile",
+          "when": "view == branchDiffView && viewItem == changedFile",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Branch Diff",
+      "properties": {
+        "branchDiff.defaultBaseBranch": {
+          "type": "string",
+          "default": "",
+          "description": "Default branch to compare against. Leave empty to auto-detect (tries 'main', then 'master')."
+        },
+        "branchDiff.autoRefresh": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically refresh when git state changes."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.54.0",
+    "ts-loader": "^9.5.0",
+    "typescript": "^5.3.0",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  }
+}

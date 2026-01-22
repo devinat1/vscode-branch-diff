@@ -1,0 +1,16 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Main branch line -->
+  <path d="M7 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <!-- Feature branch line -->
+  <path d="M17 5V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <!-- Connecting line (diff comparison) -->
+  <path d="M7 12H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 2"/>
+  <!-- Main branch dot top -->
+  <circle cx="7" cy="5" r="2" fill="currentColor"/>
+  <!-- Main branch dot bottom -->
+  <circle cx="7" cy="19" r="2" fill="currentColor"/>
+  <!-- Feature branch dot -->
+  <circle cx="17" cy="5" r="2" fill="currentColor"/>
+  <!-- Diff indicator -->
+  <circle cx="17" cy="12" r="2" fill="currentColor"/>
+</svg>
