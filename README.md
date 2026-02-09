@@ -30,17 +30,3 @@ A VS Code extension that shows the complete diff of your current branch compared
 | `Branch Diff: Refresh` | Manually refresh the file list and gutter decorations |
 | `Branch Diff: Change Base Branch` | Pick a different branch to compare against |
 | `Branch Diff: Toggle Gutter Indicators` | Turn gutter line indicators on/off |
-
-## Development
-
-```bash
-npm install
-npm run compile   # Build once
-npm run watch     # Build on file changes
-```
-
-Press **F5** in VS Code to launch the Extension Development Host for testing.
-
-## License
-
-MIT
