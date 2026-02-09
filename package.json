@@ -2,7 +2,7 @@
   "name": "vscode-branch-diff",
   "displayName": "Branch Diff",
   "description": "View the complete diff of your current branch compared to main",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "devinat1",
   "license": "MIT",
   "icon": "resources/icons/extension-icon.png",
