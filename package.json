@@ -5,6 +5,7 @@
   "version": "0.0.1",
   "publisher": "devinat1",
   "license": "MIT",
+  "icon": "resources/icons/extension-icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/devinat1/vscode-branch-diff"
