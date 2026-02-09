@@ -1,0 +1,40 @@
+name: Publish to Open VSX
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - run: npm ci
+
+      - name: Bump version
+        run: 'npm version patch --allow-same-version --message "chore: bump version [skip ci]"'
+
+      - run: npx @vscode/vsce package --no-dependencies
+
+      - name: Publish to Open VSX
+        run: npx ovsx publish *.vsix -p ${{ secrets.OVSX_PAT }}
+
+      - name: Push version bump
+        run: git push --follow-tags
