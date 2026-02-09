@@ -71,6 +71,12 @@
         "command": "branchDiff.openFile",
         "title": "Open File",
         "category": "Branch Diff"
+      },
+      {
+        "command": "branchDiff.toggleGutterIndicators",
+        "title": "Toggle Gutter Indicators",
+        "icon": "$(eye)",
+        "category": "Branch Diff"
       }
     ],
     "menus": {
@@ -84,6 +90,11 @@
           "command": "branchDiff.changeBaseBranch",
           "when": "view == branchDiffView",
           "group": "navigation@2"
+        },
+        {
+          "command": "branchDiff.toggleGutterIndicators",
+          "when": "view == branchDiffView",
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [
@@ -111,6 +122,11 @@
           "type": "boolean",
           "default": true,
           "description": "Automatically refresh when git state changes."
+        },
+        "branchDiff.gutterIndicators": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show colored gutter indicators for changed lines."
         }
       }
     }

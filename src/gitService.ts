@@ -32,6 +32,14 @@ interface Branch {
 
 export type FileStatus = 'A' | 'M' | 'D' | 'R' | 'C' | 'U';
 
+export type LineChangeType = 'added' | 'modified' | 'deleted';
+
+export interface LineChange {
+  type: LineChangeType;
+  startLine: number;  // 1-based, in the NEW file
+  endLine: number;    // 1-based, inclusive
+}
+
 export interface ChangedFile {
   status: FileStatus;
   path: string;
@@ -216,6 +224,129 @@ export class GitService {
       // File might not exist at that commit (new file)
       return '';
     }
+  }
+
+  async getLineDiff(mergeBase: string, filePath: string): Promise<LineChange[]> {
+    const repoPath = this.getRepoPath();
+    if (!repoPath) {
+      return [];
+    }
+
+    try {
+      const { stdout } = await execAsync(
+        `git diff ${mergeBase}..HEAD -- "${filePath}"`,
+        { cwd: repoPath, maxBuffer: 10 * 1024 * 1024 }
+      );
+      return this.parseUnifiedDiff(stdout);
+    } catch {
+      return [];
+    }
+  }
+
+  private parseUnifiedDiff(diffOutput: string): LineChange[] {
+    const changes: LineChange[] = [];
+    const lines = diffOutput.split('\n');
+
+    let newLine = 0; // Tracks current position in the new file
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      // Parse hunk header: @@ -oldStart,oldCount +newStart,newCount @@
+      const hunkMatch = line.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+      if (hunkMatch) {
+        newLine = parseInt(hunkMatch[1], 10);
+        continue;
+      }
+
+      // Skip lines before first hunk (file headers)
+      if (newLine === 0) {
+        continue;
+      }
+
+      if (line.startsWith('-')) {
+        // Collect contiguous removed lines
+        const removeStart = i;
+        while (i < lines.length && lines[i].startsWith('-')) {
+          i++;
+        }
+        const removeCount = i - removeStart;
+
+        // Collect contiguous added lines immediately following
+        const addStart = i;
+        while (i < lines.length && lines[i].startsWith('+')) {
+          i++;
+        }
+        const addCount = i - addStart;
+
+        // Back up so the outer for-loop increment doesn't skip a line
+        i--;
+
+        if (removeCount > 0 && addCount > 0) {
+          // Modified: overlap region
+          const overlap = Math.min(removeCount, addCount);
+          changes.push({
+            type: 'modified',
+            startLine: newLine,
+            endLine: newLine + overlap - 1
+          });
+
+          if (addCount > overlap) {
+            // Surplus added lines
+            changes.push({
+              type: 'added',
+              startLine: newLine + overlap,
+              endLine: newLine + addCount - 1
+            });
+          } else if (removeCount > overlap) {
+            // Surplus removed lines → deleted marker at end of modified region
+            changes.push({
+              type: 'deleted',
+              startLine: newLine + overlap,
+              endLine: newLine + overlap
+            });
+          }
+
+          newLine += addCount;
+        } else if (addCount > 0) {
+          // Pure addition
+          changes.push({
+            type: 'added',
+            startLine: newLine,
+            endLine: newLine + addCount - 1
+          });
+          newLine += addCount;
+        } else {
+          // Pure deletion — marker at current position
+          changes.push({
+            type: 'deleted',
+            startLine: newLine,
+            endLine: newLine
+          });
+        }
+      } else if (line.startsWith('+')) {
+        // Standalone added lines (not preceded by removes)
+        const addStart = i;
+        while (i < lines.length && lines[i].startsWith('+')) {
+          i++;
+        }
+        const addCount = i - addStart;
+        i--;
+
+        changes.push({
+          type: 'added',
+          startLine: newLine,
+          endLine: newLine + addCount - 1
+        });
+        newLine += addCount;
+      } else if (line.startsWith(' ')) {
+        // Context line — advance position
+        newLine++;
+      }
+      // Ignore other lines (e.g., "\ No newline at end of file")
+    }
+
+    return changes;
   }
 
   async getAllBranches(): Promise<string[]> {

@@ -3,9 +3,11 @@ import * as path from 'path';
 import { GitService } from './gitService';
 import { BranchDiffProvider, FileItem } from './branchDiffProvider';
 import { DiffContentProvider, DIFF_SCHEME, createBaseFileUri } from './diffContentProvider';
+import { GutterDecorationProvider } from './gutterDecorationProvider';
 
 let gitService: GitService;
 let treeProvider: BranchDiffProvider;
+let gutterProvider: GutterDecorationProvider;
 
 export async function activate(context: vscode.ExtensionContext) {
   console.log('Branch Diff extension is activating...');
@@ -34,6 +36,23 @@ export async function activate(context: vscode.ExtensionContext) {
   });
   context.subscriptions.push(treeView);
 
+  // Create gutter decoration provider
+  gutterProvider = new GutterDecorationProvider(gitService);
+  gutterProvider.registerListeners();
+  context.subscriptions.push(gutterProvider);
+
+  // Helper to sync gutter provider with tree provider's merge-base
+  const syncGutter = () => {
+    const mergeBase = treeProvider.getMergeBase();
+    const changed = gutterProvider.setMergeBase(mergeBase);
+    if (changed) {
+      gutterProvider.refreshAll();
+    } else {
+      // Merge base didn't change — just decorate any newly visible editors
+      gutterProvider.decorateVisible();
+    }
+  };
+
   // Update tree view title with base branch
   const updateTitle = () => {
     const branch = treeProvider.baseBranch;
@@ -53,6 +72,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('branchDiff.refresh', async () => {
       await treeProvider.refresh();
       updateTitle();
+      syncGutter();
     }),
 
     // Open diff command
@@ -93,6 +113,7 @@ export async function activate(context: vscode.ExtensionContext) {
       if (selected) {
         await treeProvider.setBaseBranch(selected);
         updateTitle();
+        syncGutter();
         vscode.window.showInformationMessage(`Now comparing against: ${selected}`);
       }
     })
@@ -106,13 +127,22 @@ export async function activate(context: vscode.ExtensionContext) {
       await new Promise(resolve => setTimeout(resolve, 500));
       await treeProvider.refresh();
       updateTitle();
+      syncGutter();
     });
     context.subscriptions.push(stateChangeDisposable);
   }
 
+  // Register toggle gutter command
+  context.subscriptions.push(
+    vscode.commands.registerCommand('branchDiff.toggleGutterIndicators', () => {
+      gutterProvider.toggle();
+    })
+  );
+
   // Initial refresh
   await treeProvider.refresh();
   updateTitle();
+  syncGutter();
 
   console.log('Branch Diff extension activated');
 }
